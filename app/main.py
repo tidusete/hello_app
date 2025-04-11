@@ -2,8 +2,8 @@ from fastapi import FastAPI, Path, status, HTTPException
 from fastapi.responses import JSONResponse
 from datetime import date
 
-from models import UserBirthdayRequest
-from db import init_db_connection, upsert_user, get_user_birthdate
+from app.models import UserBirthdayRequest
+from app.db import init_db_connection, upsert_user, get_user_birthdate
 
 app = FastAPI()
 

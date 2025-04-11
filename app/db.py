@@ -1,9 +1,8 @@
 import psycopg2
 from psycopg2 import sql, OperationalError
-#from psycopg2.extensions import ISOLATION_LEVEL_READ_COMMITTED
 from datetime import date
 from typing import Optional
-from config import DATABASE_URL
+from app.config import DATABASE_URL
 
 # Global sync connection
 DB_CONN = None
