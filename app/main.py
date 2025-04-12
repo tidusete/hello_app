@@ -61,3 +61,8 @@ def liveness():
 def readiness():
     # Here I would check if the DB connection works or not
     return {"status": "ok"}
+
+@app.get("/metrics")
+def metrics():
+    # Placeholder response with no actual metrics
+    return "# Placeholder for Prometheus metrics\n"
