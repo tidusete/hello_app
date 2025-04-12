@@ -20,7 +20,7 @@ def save_birthday(
 
     if request.dateOfBirth >= date.today():
         raise HTTPException(status_code=400, detail="Date of birth must be in the past")
-
+    # TODO Implement Logger
     print(f"This is the user {username} and this is the date {request.dateOfBirth}")
     upsert_user(username, request.dateOfBirth)
 
@@ -33,6 +33,8 @@ def greet_user(
     
     day_birthday = get_user_birthdate(lookup_username)
     if day_birthday is None:
+        # TODO Implement Logger
+        print(f"This user {lookup_username} does not exist on the DB")
         raise HTTPException(status_code=404, detail="User not found")
 
     today = date.today()
