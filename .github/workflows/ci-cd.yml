@@ -119,5 +119,35 @@ jobs:
     steps:
       - name: Echo commit image reference to GitOps
         run: |
+          echo "Running Helm like tool to generate the k8s manifests"
           echo "Committing new image reference to GitOps repo"
           echo "Using image tag: $GITHUB_REF_NAME"
+  test-gitops:
+    name: Check the metrics of new version of the service
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: update-gitops
+    steps:
+      - name: Check metrics
+        run: |
+          echo "Checking the metrics of the service"
+
+  promote_release:
+    name: Promote Release
+    runs-on: ubuntu-latest
+    needs: test-gitops
+    if: needs.test-gitops.result == 'success'
+    steps:
+      - name: Promote release placeholder
+        run: |
+          echo "Promoting release: ${{ github.ref_name }}"
+
+  rollback_release:
+    name: Rollback Release  
+    runs-on: ubuntu-latest
+    needs: test-gitops
+    if: needs.test-gitops.result == 'failure'
+    steps:
+      - name: Rollback release placeholder
+        run: |
+          echo "Rolling back release: ${{ github.ref_name }}"
