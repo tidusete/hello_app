@@ -1,0 +1,49 @@
+services:
+  app:
+    # Build configuration for the "app" service:
+    # - 'context: .' tells Docker to use the current directory as the build context
+    # - 'dockerfile: Dockerfile' specifies the file to use for building the image
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    # This sets the default working directory inside the container
+    working_dir: /app
+
+    # Mounts the local "app" directory into the container so code changes are reflected without rebuild
+    volumes:
+      - ./app:/app/app
+
+    # Maps the container port 8000 to the host machine port defined by APP_PORT
+    # If APP_PORT is not set, it defaults to 8000
+    ports:
+      - "${APP_PORT:-8000}:8000"
+
+    # Passes the DATABASE_URL environment variable to the container
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+
+    # Ensures the 'app' service won't start until 'postgres' is running
+    depends_on:
+      - postgres
+
+  postgres: ## just for reference...
+    # Official Postgres image version 15
+    image: postgres:16
+
+    # Set up the default database, user, and password
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+
+    # This volume stores PostgreSQL data outside of the container filesystem,
+    # preserving data between container restarts or recreations
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+
+
+# Declare named volumes to be used for persistent storage
+volumes:
+  postgres_data: {}

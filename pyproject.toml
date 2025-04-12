@@ -1,0 +1,17 @@
+[project]
+name = "hello-app"
+version = "0.1.0"
+description = "Simple API that uses FASTAPI"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi[standard]>=0.115.12",
+    "httpx>=0.28.1",
+    "psycopg2-binary>=2.9.10",
+    "pytest>=8.3.5",
+    "pytest-mock>=3.14.0",
+]
+[tool.pytest.ini_options]
+pythonpath = [
+  "."
+]
