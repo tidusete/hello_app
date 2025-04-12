@@ -1,0 +1,96 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-deployment
+  labels:
+    app: hello-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hello-app
+  template:
+    metadata:
+      labels:
+        app: hello-app
+    spec:
+      containers:
+        - name: app
+          image: registry/hello-app:latest  # Specify your image
+          ports:
+            - containerPort: 8000
+          env:
+            - name: DATABASE_URL
+              value: "postgresql://$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):5432/$(DB_NAME)"
+            - name: DB_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: hello-app-config
+                  key: db-user
+            - name: DB_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: hello-app-config
+                  key: db-host
+            - name: DB_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: hello-app-config
+                  key: db-name
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: hello-app-secret
+                  key: db-password
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: hello-app-config
+data:
+  # Here we wil put configurations that affect our app
+  db-host: mydb-instance-1.xxxxxxx.eu-west-1.rds.amazonaws.com
+  db-name: mydbname
+  db-user: mydbuser
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hello-app-service
+spec:
+  selector:
+    app: my-app
+  ports:
+    - protocol: TCP
+      port: 8000
+      targetPort: 8000
+  type: ClusterIP
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: app-ingress
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+    # Optional TLS or middleware annotations can go here too
+spec:
+  rules:
+    - host: hello-app.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: hello-app-service
+                port:
+                  number: 8000
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: hello-app-secret
+type: Opaque
+stringData:
+  # It will not work because the passwd is wrong.
+  db-password: mysecurepassword
