@@ -3,6 +3,8 @@ name: HELLO_APP CI/CD Pipeline
 on:
   push:
     branches: [ main, master ]
+    tags:
+      - 'v*'
   pull_request:
     branches: [ main, master ]
 
@@ -45,7 +47,7 @@ jobs:
               --health-interval 10s
               --health-timeout 5s
               --health-retries 5
-              
+
     steps:
       - name: Checkout the repository
         uses: actions/checkout@main
@@ -71,3 +73,51 @@ jobs:
       - name: Run tests
         # For example, using `pytest`
         run: uv run pytest
+
+  build-dev:
+    name: Build and Push Image to Dev Registry
+    runs-on: ubuntu-latest
+    needs: [lint, test]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@main
+      - name: Build and Push Image to Dev Registry (placeholder)
+        run: |
+          echo "Building Docker image with tag dev-latest"
+          echo "Pushing Docker image to dev registry"
+
+  scan-image:
+    name: Scan Docker Image with Trivy
+    runs-on: ubuntu-latest
+    needs: build-dev
+    steps:
+      - name: Install Trivy
+        run: |
+          echo "Installing Trivy"
+          # Example: sudo apt-get install trivy -y
+      - name: Scan Image (placeholder)
+        run: |
+          echo "Scanning Docker image with Trivy"
+
+  build-prod:
+    name: Build and Push Image to Prod Registry (on tag)
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [lint, test, scan-image]
+    steps:
+      - name: Echo build image for prod
+        run: |
+          echo "Building Docker image for production"
+          echo "Pushing Docker image to prod registry"
+          echo "Tag: $GITHUB_REF_NAME"
+
+  update-gitops:
+    name: Update GitOps Repository
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build-prod
+    steps:
+      - name: Echo commit image reference to GitOps
+        run: |
+          echo "Committing new image reference to GitOps repo"
+          echo "Using image tag: $GITHUB_REF_NAME"
