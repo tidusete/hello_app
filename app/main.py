@@ -50,3 +50,14 @@ def greet_user(
         message = f"Hello, {display_name}! Your birthday is in {days_left} day(s)"
 
     return JSONResponse(content={"message": message})
+
+# Liveness Check Endpoint (for Kubernetes)
+@app.get("/health/live")
+def liveness():
+    return {"status": "ok"}
+
+# Readiness Check Endpoint (for Kubernetes)
+@app.get("/health/ready")
+def readiness():
+    # Here I would check if the DB connection works or not
+    return {"status": "ok"}
