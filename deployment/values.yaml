@@ -1,0 +1,25 @@
+image:
+  repository: registry/hello-app
+  tag: latest
+  pullPolicy: IfNotPresent
+
+replicaCount: 1
+
+service:
+  type: ClusterIP
+  port: 8000
+
+ingress:
+  enabled: true
+  className: "traefik"
+  host: helloapp.example.com
+  path: /
+  pathType: Prefix
+
+database:
+  host: mydb-instance-1.abc123xyz456.eu-west-1.rds.amazonaws.com
+  name: mydbname
+  user: mydbuser
+  password: mysecurepassword
+
+resources: {}
