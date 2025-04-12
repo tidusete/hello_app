@@ -1,0 +1,73 @@
+name: HELLO_APP CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  lint:
+    name: Run lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@main
+      - name: Install the latest version of uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - name: Install the project
+        run: uv sync --all-extras --dev
+      - name: Install dependencies
+        run: |
+          uv pip install ruff
+      - name: Run linter
+        run: |
+          uv run ruff check .
+
+  test:
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+    name: Run pytest tests
+    runs-on: ubuntu-latest
+    services:
+          postgres:
+            image: postgres:16
+            env:
+              POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+              POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+              POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+            ports:
+              - 5432:5432
+            options: >-
+              --health-cmd pg_isready
+              --health-interval 10s
+              --health-timeout 5s
+              --health-retries 5
+              
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@main
+      - name: Install the latest version of uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - name: Wait for Postgres to be ready
+        run: |
+          for i in {1..10}; do
+            if pg_isready -h localhost -U ${{ secrets.POSTGRES_USER }}; then
+              echo "Postgres is ready"
+              break
+            fi
+            sleep 5
+          done
+
+      - name: Load init.sql into the database
+        run: |
+          PGPASSWORD=${{ secrets.POSTGRES_PASSWORD }} psql -h localhost -U ${{ secrets.POSTGRES_USER }} -d ${{ secrets.POSTGRES_DB }} -f init.sql
+      - name: Install the project
+        run: uv sync --all-extras --dev
+      - name: Run tests
+        # For example, using `pytest`
+        run: uv run pytest

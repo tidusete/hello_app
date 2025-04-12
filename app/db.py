@@ -1,5 +1,5 @@
 import psycopg2
-from psycopg2 import sql, OperationalError
+from psycopg2 import OperationalError
 from datetime import date
 from typing import Optional
 from app.config import DATABASE_URL
