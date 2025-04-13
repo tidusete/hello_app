@@ -14,6 +14,46 @@ spec:
       labels:
         app: {{ .Release.Name }}
     spec:
+      initContainers:
+        - name: db-init
+          image: postgres:16
+          command: [ "sh", "-c" ]
+          args:
+            - |
+              echo "Waiting for DB availability..."
+              until psql "$DATABASE_URL" -c '\q' 2>/dev/null; do
+                echo "Database not ready, sleeping..."
+                sleep 2
+              done
+              echo "Running schema migration..."
+              psql "$DATABASE_URL" -f /docker-entrypoint-initdb.d/init.sql
+          env:
+            - name: DB_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Release.Name }}-config
+                  key: db-user
+            - name: DB_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Release.Name }}-config
+                  key: db-host
+            - name: DB_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Release.Name }}-config
+                  key: db-name
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secret
+                  key: db-password
+            - name: DATABASE_URL
+              value: "postgresql://$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):5432/$(DB_NAME)"
+          volumeMounts:
+            - name: init-sql-volume
+              mountPath: /docker-entrypoint-initdb.d
+
       containers:
         - name: hello-app
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
@@ -59,3 +99,7 @@ spec:
                   key: db-password
             - name: DATABASE_URL
               value: "postgresql://$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):5432/$(DB_NAME)"
+      volumes:
+        - name: init-sql-volume
+          configMap:
+            name: {{ .Release.Name }}-init-sql
